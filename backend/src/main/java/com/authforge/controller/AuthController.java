@@ -40,6 +40,12 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/verify")
+    public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully! You can now log in."));
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         AuthResponse response = authService.refreshToken(request);
@@ -55,10 +61,8 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body) {
         String email = body.get("email");
-        String token = authService.forgotPassword(email);
-        return ResponseEntity.ok(Map.of(
-                "message", "Password reset token generated. Check server logs.",
-                "token", token));
+        authService.forgotPassword(email);
+        return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent."));
     }
 
     @PostMapping("/reset-password")

@@ -15,6 +15,8 @@ public class AuthResponse {
     private UserDto user;
     @Builder.Default
     private boolean requiresTwoFactor = false;
+    @Builder.Default
+    private boolean requiresEmailVerification = false;
 
     @Data
     @AllArgsConstructor

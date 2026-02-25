@@ -28,6 +28,16 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState({}, document.title, '/');
     }
 
+    if (params.has('verify')) {
+        fetch(`/api/auth/verify?token=${params.get('verify')}`)
+            .then(r => r.json())
+            .then(data => {
+                toast(data.message || 'Email verified!', 'success');
+                window.history.replaceState({}, document.title, '/');
+            })
+            .catch(() => toast('Verification failed or already verified', 'error'));
+    }
+
     setTimeout(() => {
         loadingScreen.classList.add('hidden');
 
@@ -131,6 +141,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await API.register({ name, email, password });
+
+            if (response.requiresEmailVerification) {
+                toast('Account created! Check your email to verify.', 'success');
+                hideAllAuthForms();
+                loginForm.classList.remove('hidden');
+                return;
+            }
+
             Auth.save(response);
             toast('Account created successfully!', 'success');
             showDashboard();

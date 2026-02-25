@@ -33,6 +33,15 @@ spring:
             client-secret: ${GITHUB_CLIENT_SECRET:}
             scope: user:email, read:user
 
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: false
+      mail.smtp.starttls.enable: false
+
 authforge:
   jwt:
     secret: ${JWT_SECRET:my-super-secret-key-that-should-be-at-least-256-bits-long-for-hs256}
@@ -44,6 +53,15 @@ authforge:
     redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:4000}
   rate-limit:
     requests-per-minute: ${RATE_LIMIT_RPM:30}
+  features:
+    oauth2: ${FEATURE_OAUTH2:true}
+    two-factor: ${FEATURE_2FA:true}
+    rate-limiting: ${FEATURE_RATE_LIMIT:true}
+    email-verification: ${FEATURE_EMAIL:true}
+  app:
+    name: AuthForge
+    url: ${APP_URL:http://localhost:4000}
+    from-email: ${FROM_EMAIL:noreply@authforge.local}
 
 logging:
   level:

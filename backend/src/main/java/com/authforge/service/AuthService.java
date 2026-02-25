@@ -1,5 +1,6 @@
 package com.authforge.service;
 
+import com.authforge.config.FeatureFlags;
 import com.authforge.dto.*;
 import com.authforge.model.RefreshToken;
 import com.authforge.model.Role;
@@ -29,6 +30,8 @@ public class AuthService {
         private final RefreshTokenService refreshTokenService;
         private final AuthenticationManager authenticationManager;
         private final TotpService totpService;
+        private final EmailService emailService;
+        private final FeatureFlags featureFlags;
 
         public AuthService(
                         UserRepository userRepository,
@@ -36,13 +39,17 @@ public class AuthService {
                         JwtTokenProvider jwtTokenProvider,
                         RefreshTokenService refreshTokenService,
                         AuthenticationManager authenticationManager,
-                        TotpService totpService) {
+                        TotpService totpService,
+                        EmailService emailService,
+                        FeatureFlags featureFlags) {
                 this.userRepository = userRepository;
                 this.passwordEncoder = passwordEncoder;
                 this.jwtTokenProvider = jwtTokenProvider;
                 this.refreshTokenService = refreshTokenService;
                 this.authenticationManager = authenticationManager;
                 this.totpService = totpService;
+                this.emailService = emailService;
+                this.featureFlags = featureFlags;
         }
 
         @Transactional
@@ -57,10 +64,27 @@ public class AuthService {
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .role(Role.USER)
                                 .enabled(true)
+                                .emailVerified(!featureFlags.isEmailVerification())
                                 .build();
 
                 user = userRepository.save(user);
                 log.info("User registered: {}", user.getEmail());
+
+                if (featureFlags.isEmailVerification()) {
+                        String token = UUID.randomUUID().toString();
+                        user.setVerificationToken(token);
+                        userRepository.save(user);
+                        emailService.sendVerificationEmail(user.getEmail(), token);
+                        log.info("Verification email sent to: {}", user.getEmail());
+
+                        return AuthResponse.builder()
+                                        .requiresEmailVerification(true)
+                                        .user(AuthResponse.UserDto.builder()
+                                                        .email(user.getEmail())
+                                                        .name(user.getName())
+                                                        .build())
+                                        .build();
+                }
 
                 return generateAuthResponse(user);
         }
@@ -74,7 +98,11 @@ public class AuthService {
                 User user = userRepository.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-                if (user.isTwoFactorEnabled()) {
+                if (featureFlags.isEmailVerification() && !user.isEmailVerified()) {
+                        throw new RuntimeException("Please verify your email before logging in");
+                }
+
+                if (featureFlags.isTwoFactor() && user.isTwoFactorEnabled()) {
                         log.info("2FA required for: {}", user.getEmail());
                         return AuthResponse.builder()
                                         .requiresTwoFactor(true)
@@ -89,6 +117,10 @@ public class AuthService {
         }
 
         public AuthResponse verifyTwoFactor(String email, String code) {
+                if (!featureFlags.isTwoFactor()) {
+                        throw new RuntimeException("Two-factor authentication is disabled");
+                }
+
                 User user = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -102,6 +134,17 @@ public class AuthService {
 
                 log.info("2FA verified for: {}", user.getEmail());
                 return generateAuthResponse(user);
+        }
+
+        @Transactional
+        public void verifyEmail(String token) {
+                User user = userRepository.findByVerificationToken(token)
+                                .orElseThrow(() -> new RuntimeException("Invalid or expired verification token"));
+
+                user.setEmailVerified(true);
+                user.setVerificationToken(null);
+                userRepository.save(user);
+                log.info("Email verified for: {}", user.getEmail());
         }
 
         @Transactional
@@ -135,7 +178,12 @@ public class AuthService {
                 user.setVerificationToken(resetToken);
                 userRepository.save(user);
 
-                log.info("Password reset token for {}: {}", email, resetToken);
+                if (featureFlags.isEmailVerification()) {
+                        emailService.sendPasswordResetEmail(email, resetToken);
+                        log.info("Password reset email sent to: {}", email);
+                } else {
+                        log.info("Password reset token for {}: {}", email, resetToken);
+                }
 
                 return resetToken;
         }

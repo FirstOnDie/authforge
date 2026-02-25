@@ -27,6 +27,10 @@
 | OAuth2 (Google, GitHub) | ✅ |
 | Two-Factor Authentication (TOTP) | ✅ |
 | Rate Limiting | ✅ |
+| Feature Flags (Toggle features via env vars) | ✅ |
+| Email Service (Verification + Password Reset) | ✅ |
+| Unit Tests + JaCoCo Coverage | ✅ |
+| SonarQube Code Quality | ✅ |
 
 ---
 
@@ -53,6 +57,71 @@ Open **http://localhost:4000** → Ready! 🎉
 | Frontend (Nginx) | 4000 | http://localhost:4000 |
 | Backend (Spring Boot) | 8090 | http://localhost:8090 |
 | PostgreSQL | 5433 | — |
+| MailHog (Email UI) | 8025 | http://localhost:8025 |
+| SonarQube (separate) | 9000 | http://localhost:9000 |
+
+---
+
+## 🎛️ Feature Flags
+
+Toggle features on/off via environment variables — no code changes needed.
+
+| Flag | Env Variable | Default |
+|------|-------------|---------|
+| OAuth2 Login | `FEATURE_OAUTH2` | `true` |
+| Two-Factor Auth | `FEATURE_2FA` | `true` |
+| Rate Limiting | `FEATURE_RATE_LIMIT` | `true` |
+| Email Verification | `FEATURE_EMAIL` | `true` |
+
+Active flags are exposed at `GET /api/admin/features` (admin only).
+
+---
+
+## 📧 Email Service
+
+Uses **MailHog** in Docker for local email testing (no real emails sent).
+
+- **Verification emails**: sent on registration when `FEATURE_EMAIL=true`
+- **Password reset emails**: HTML emails with reset links
+- **MailHog UI**: http://localhost:8025 to view all captured emails
+
+---
+
+## 🧪 Tests & Coverage
+
+```bash
+cd backend
+mvn clean test
+```
+
+JaCoCo coverage report: `backend/target/site/jacoco/index.html`
+
+| Test Class | Coverage |
+|-----------|----------|
+| `AuthServiceTest` | register, login, 2FA, logout, email verification |
+| `UserServiceTest` | getByEmail, changeRole, 2FA toggle |
+| `TotpServiceTest` | generateSecret, verifyCode |
+| `RefreshTokenServiceTest` | create, verify, delete |
+| `JwtTokenProviderTest` | generate, validate |
+| `RateLimitFilterTest` | allow/block requests |
+| `EmailServiceTest` | send emails (mocked) |
+
+---
+
+## 📊 SonarQube
+
+Runs in a **separate** Docker Compose file to keep the main stack lightweight.
+
+```bash
+# Start SonarQube
+docker-compose -f docker-compose.sonar.yml up -d
+
+# Wait ~1 min for startup, then run analysis
+cd backend
+mvn clean test sonar:sonar -Dsonar.host.url=http://localhost:9000
+```
+
+Default credentials: `admin` / `admin`
 
 ---
 
@@ -248,7 +317,7 @@ curl -X GET http://localhost:8090/api/users/me \
 - [x] **v1.0** — JWT Auth, Roles, Password Recovery, Docker
 - [x] **v1.1** — OAuth2 (Google, GitHub)
 - [x] **v1.2** — 2FA (TOTP), Rate Limiting
-- [ ] **v2.0** — Email Service, Account Verification
+- [x] **v2.0** — Email Service, Account Verification, Feature Flags, Tests + SonarQube
 
 ---
 

@@ -46,6 +46,9 @@ public class User {
     private String twoFactorSecret;
 
     @Builder.Default
+    private boolean emailVerified = false;
+
+    @Builder.Default
     private boolean enabled = true;
 
     private String verificationToken;

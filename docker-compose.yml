@@ -17,6 +17,14 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: authforge-mail
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    restart: unless-stopped
+
   backend:
     build: ./backend
     container_name: authforge-api
@@ -31,11 +39,20 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       OAUTH2_REDIRECT_URI: http://localhost:4000
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+      FEATURE_OAUTH2: ${FEATURE_OAUTH2:-true}
+      FEATURE_2FA: ${FEATURE_2FA:-true}
+      FEATURE_RATE_LIMIT: ${FEATURE_RATE_LIMIT:-true}
+      FEATURE_EMAIL: ${FEATURE_EMAIL:-true}
+      APP_URL: http://localhost:4000
     ports:
       - "8090:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     restart: unless-stopped
 
   frontend:
