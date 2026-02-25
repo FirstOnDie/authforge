@@ -44,15 +44,15 @@ cd authforge
 docker-compose up --build
 ```
 
-Open **http://localhost:3000** → Ready! 🎉
+Open **http://localhost:4000** → Ready! 🎉
 
 ### Default ports
 
 | Service | Port | URL |
 |---------|------|-----|
-| Frontend (Nginx) | 3000 | http://localhost:3000 |
-| Backend (Spring Boot) | 8080 | http://localhost:8080 |
-| PostgreSQL | 5432 | — |
+| Frontend (Nginx) | 4000 | http://localhost:4000 |
+| Backend (Spring Boot) | 8090 | http://localhost:8090 |
+| PostgreSQL | 5433 | — |
 
 ---
 
@@ -92,7 +92,7 @@ PUT  /api/admin/users/{id}/role → Change user role
 ├──────────┬──────────────┬───────────────────┤
 │ Frontend │   Backend    │    PostgreSQL      │
 │ Nginx    │ Spring Boot  │                   │
-│ :3000    │ :8080        │    :5432           │
+│ :4000    │ :8090        │    :5433           │
 │          │              │                   │
 │ HTML/CSS │ Controllers  │  users table      │
 │ JS       │ Services     │  refresh_tokens   │
@@ -169,7 +169,7 @@ All configuration is done via environment variables (see `.env.example`):
 | `DB_USERNAME` | `authforge` | Database user |
 | `DB_PASSWORD` | `authforge` | Database password |
 | `JWT_SECRET` | (change me!) | HMAC-SHA256 signing key |
-| `CORS_ORIGINS` | `http://localhost:3000` | Allowed CORS origins |
+| `CORS_ORIGINS` | `http://localhost:4000` | Allowed CORS origins |
 
 ---
 
@@ -177,17 +177,17 @@ All configuration is done via environment variables (see `.env.example`):
 
 ```bash
 # Register
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8090/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"John","email":"john@test.com","password":"password123"}'
 
 # Login
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8090/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"john@test.com","password":"password123"}'
 
 # Get profile (replace TOKEN)
-curl -X GET http://localhost:8080/api/users/me \
+curl -X GET http://localhost:8090/api/users/me \
   -H "Authorization: Bearer TOKEN"
 ```
 

@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: authforge
       POSTGRES_PASSWORD: authforge
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,9 +25,9 @@ services:
       DB_USERNAME: authforge
       DB_PASSWORD: authforge
       JWT_SECRET: authforge-super-secret-key-change-me-in-production-256-bits
-      CORS_ORIGINS: http://localhost:3000
+      CORS_ORIGINS: http://localhost:4000
     ports:
-      - "8080:8080"
+      - "8090:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,7 +37,7 @@ services:
     build: ./frontend
     container_name: authforge-ui
     ports:
-      - "3000:80"
+      - "4000:80"
     depends_on:
       - backend
     restart: unless-stopped
