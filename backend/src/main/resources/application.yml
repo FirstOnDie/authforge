@@ -20,6 +20,19 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope: email, profile
+          github:
+            client-id: ${GITHUB_CLIENT_ID:}
+            client-secret: ${GITHUB_CLIENT_SECRET:}
+            scope: user:email, read:user
+
 authforge:
   jwt:
     secret: ${JWT_SECRET:my-super-secret-key-that-should-be-at-least-256-bits-long-for-hs256}
@@ -27,6 +40,8 @@ authforge:
     refresh-token-expiration: 604800000
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:4000,http://localhost:5500}
+  oauth2:
+    redirect-uri: ${OAUTH2_REDIRECT_URI:http://localhost:4000}
 
 logging:
   level:

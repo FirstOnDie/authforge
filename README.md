@@ -24,7 +24,7 @@
 | Global Exception Handling | ✅ |
 | Frontend Demo (Login, Register, Dashboard, Admin) | ✅ |
 | Docker Compose (PostgreSQL + Backend + Frontend) | ✅ |
-| OAuth2 (Google, GitHub) | 🔜 v1.1 |
+| OAuth2 (Google, GitHub) | ✅ |
 | Two-Factor Authentication (TOTP) | 🔜 v1.2 |
 | Rate Limiting | 🔜 v1.2 |
 
@@ -170,6 +170,26 @@ All configuration is done via environment variables (see `.env.example`):
 | `DB_PASSWORD` | `authforge` | Database password |
 | `JWT_SECRET` | (change me!) | HMAC-SHA256 signing key |
 | `CORS_ORIGINS` | `http://localhost:4000` | Allowed CORS origins |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth2 Client ID |
+| `GOOGLE_CLIENT_SECRET` | — | Google OAuth2 Client Secret |
+| `GITHUB_CLIENT_ID` | — | GitHub OAuth2 Client ID |
+| `GITHUB_CLIENT_SECRET` | — | GitHub OAuth2 Client Secret |
+| `OAUTH2_REDIRECT_URI` | `http://localhost:4000` | Frontend redirect after OAuth2 |
+
+---
+
+## 🔑 OAuth2 Setup (Google & GitHub)
+
+### Google
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
+2. Create an **OAuth 2.0 Client ID** (Web Application)
+3. Set Authorized redirect URI: `http://localhost:8090/login/oauth2/code/google`
+4. Copy the Client ID and Client Secret into your `.env` file
+
+### GitHub
+1. Go to [GitHub Settings](https://github.com/settings/developers) → OAuth Apps → New OAuth App
+2. Set Authorization callback URL: `http://localhost:8090/login/oauth2/code/github`
+3. Copy the Client ID and Client Secret into your `.env` file
 
 ---
 
@@ -196,7 +216,7 @@ curl -X GET http://localhost:8090/api/users/me \
 ## 📋 Roadmap
 
 - [x] **v1.0** — JWT Auth, Roles, Password Recovery, Docker
-- [ ] **v1.1** — OAuth2 (Google, GitHub)
+- [x] **v1.1** — OAuth2 (Google, GitHub)
 - [ ] **v1.2** — 2FA (TOTP), Rate Limiting
 - [ ] **v2.0** — Email Service, Account Verification
 

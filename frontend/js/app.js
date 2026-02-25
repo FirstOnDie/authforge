@@ -8,6 +8,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
     const forgotForm = document.getElementById('forgot-form');
 
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('token')) {
+        const oauthResponse = {
+            accessToken: params.get('token'),
+            refreshToken: params.get('refreshToken'),
+            expiresIn: params.get('expiresIn'),
+            user: {
+                id: params.get('userId'),
+                name: params.get('userName'),
+                email: params.get('userEmail'),
+                role: params.get('userRole'),
+            }
+        };
+        Auth.save(oauthResponse);
+        window.history.replaceState({}, document.title, '/');
+    }
+
     setTimeout(() => {
         loadingScreen.classList.add('hidden');
 
