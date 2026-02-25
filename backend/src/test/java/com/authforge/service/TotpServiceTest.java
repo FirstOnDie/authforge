@@ -11,17 +11,17 @@ class TotpServiceTest {
     @Test
     void shouldGenerateSecret() {
         String secret = totpService.generateSecret();
-        assertThat(secret).isNotBlank();
-        assertThat(secret.length()).isGreaterThanOrEqualTo(16);
+        assertThat(secret).isNotBlank()
+                .hasSizeGreaterThanOrEqualTo(16);
     }
 
     @Test
     void shouldGenerateQrUri() {
         String secret = totpService.generateSecret();
         String qrUri = totpService.generateQrUri(secret, "test@example.com");
-        assertThat(qrUri).startsWith("otpauth://totp/AuthForge:");
-        assertThat(qrUri).contains(secret);
-        assertThat(qrUri).contains("test@example.com");
+        assertThat(qrUri).startsWith("otpauth://totp/AuthForge:")
+                .contains(secret)
+                .contains("test@example.com");
     }
 
     @Test

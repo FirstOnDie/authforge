@@ -53,7 +53,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("notfound@test.com")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getUserByEmail("notfound@test.com"))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(com.authforge.exception.ResourceNotFoundException.class)
                 .hasMessageContaining("User not found");
     }
 

@@ -68,4 +68,25 @@ class RateLimitFilterTest {
 
         verify(response).setStatus(429);
     }
+
+    @Test
+    void shouldExtractClientIpFromXForwardedForHeader() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1, 192.168.1.1");
+        
+        rateLimitFilter.doFilterInternal(request, response, filterChain);
+        
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldHandleEmptyXForwardedForHeader() throws Exception {
+        when(request.getRequestURI()).thenReturn("/api/auth/login");
+        when(request.getHeader("X-Forwarded-For")).thenReturn("");
+        when(request.getRemoteAddr()).thenReturn("192.168.1.2");
+
+        rateLimitFilter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+    }
 }

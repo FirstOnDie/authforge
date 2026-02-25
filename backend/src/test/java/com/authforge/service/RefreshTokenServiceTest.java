@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -31,8 +30,7 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        refreshTokenService = new RefreshTokenService(refreshTokenRepository);
-        ReflectionTestUtils.setField(refreshTokenService, "refreshTokenExpiration", 604800000L);
+        refreshTokenService = new RefreshTokenService(refreshTokenRepository, 604800000L);
 
         testUser = User.builder()
                 .id(1L)

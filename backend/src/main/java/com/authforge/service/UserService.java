@@ -11,6 +11,8 @@ import java.util.List;
 @Service
 public class UserService {
 
+    private static final String USER_NOT_FOUND_ID = "User not found with id: ";
+
     private final UserRepository userRepository;
 
     public UserService(UserRepository userRepository) {
@@ -19,7 +21,7 @@ public class UserService {
 
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found: " + email));
+                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException("User not found: " + email));
     }
 
     public List<User> getAllUsers() {
@@ -29,7 +31,7 @@ public class UserService {
     @Transactional
     public User changeRole(Long userId, String newRole) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(USER_NOT_FOUND_ID + userId));
 
         user.setRole(Role.valueOf(newRole.toUpperCase()));
         return userRepository.save(user);
@@ -38,7 +40,7 @@ public class UserService {
     @Transactional
     public void enableTwoFactor(Long userId, String secret) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(USER_NOT_FOUND_ID + userId));
 
         user.setTwoFactorSecret(secret);
         user.setTwoFactorEnabled(true);
@@ -48,7 +50,7 @@ public class UserService {
     @Transactional
     public void disableTwoFactor(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(USER_NOT_FOUND_ID + userId));
 
         user.setTwoFactorSecret(null);
         user.setTwoFactorEnabled(false);

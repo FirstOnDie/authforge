@@ -16,6 +16,9 @@ import java.util.Map;
 @RequestMapping("/api/2fa")
 public class TwoFactorController {
 
+    private static final String ERROR_KEY = "error";
+    private static final String TWO_FACTOR_DISABLED_MSG = "Two-factor authentication is disabled";
+
     private final TotpService totpService;
     private final UserService userService;
     private final FeatureFlags featureFlags;
@@ -27,10 +30,10 @@ public class TwoFactorController {
     }
 
     @PostMapping("/setup")
-    public ResponseEntity<?> setup(Authentication authentication) {
+    public ResponseEntity<Object> setup(Authentication authentication) {
         if (!featureFlags.isTwoFactor()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Two-factor authentication is disabled"));
+                    .body(Map.of(ERROR_KEY, TWO_FACTOR_DISABLED_MSG));
         }
         User user = userService.getUserByEmail(authentication.getName());
         String secret = totpService.generateSecret();
@@ -39,13 +42,13 @@ public class TwoFactorController {
     }
 
     @PostMapping("/enable")
-    public ResponseEntity<?> enable(
+    public ResponseEntity<Object> enable(
             Authentication authentication,
             @RequestBody Map<String, String> body) {
 
         if (!featureFlags.isTwoFactor()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Two-factor authentication is disabled"));
+                    .body(Map.of(ERROR_KEY, TWO_FACTOR_DISABLED_MSG));
         }
 
         User user = userService.getUserByEmail(authentication.getName());
@@ -53,7 +56,7 @@ public class TwoFactorController {
         String code = body.get("code");
 
         if (!totpService.verifyCode(secret, code)) {
-            throw new RuntimeException("Invalid 2FA code");
+            throw new com.authforge.exception.BadRequestException("Invalid 2FA code");
         }
 
         userService.enableTwoFactor(user.getId(), secret);
@@ -61,10 +64,10 @@ public class TwoFactorController {
     }
 
     @PostMapping("/disable")
-    public ResponseEntity<?> disable(Authentication authentication) {
+    public ResponseEntity<Object> disable(Authentication authentication) {
         if (!featureFlags.isTwoFactor()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Two-factor authentication is disabled"));
+                    .body(Map.of(ERROR_KEY, TWO_FACTOR_DISABLED_MSG));
         }
         User user = userService.getUserByEmail(authentication.getName());
         userService.disableTwoFactor(user.getId());

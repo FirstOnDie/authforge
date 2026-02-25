@@ -7,7 +7,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 @Service
@@ -17,13 +16,13 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${authforge.app.name:AuthForge}")
+    @Value("${authforge.app.name}")
     private String appName;
 
-    @Value("${authforge.app.url:http://localhost:4000}")
+    @Value("${authforge.app.url}")
     private String appUrl;
 
-    @Value("${authforge.app.from-email:noreply@authforge.local}")
+    @Value("${authforge.app.from-email}")
     private String fromEmail;
 
     public EmailService(JavaMailSender mailSender) {
@@ -62,9 +61,8 @@ public class EmailService {
             helper.setText(html, true);
             mailSender.send(message);
             log.info("Email sent to: {}", to);
-        } catch (MessagingException e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
-            throw new RuntimeException("Failed to send email", e);
+        } catch (Exception e) {
+            throw new com.authforge.exception.BadRequestException("Failed to send email: " + e.getMessage());
         }
     }
 

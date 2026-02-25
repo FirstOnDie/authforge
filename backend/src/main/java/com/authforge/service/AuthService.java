@@ -23,6 +23,7 @@ import java.util.UUID;
 public class AuthService {
 
         private static final Logger log = LoggerFactory.getLogger(AuthService.class);
+        private static final String USER_NOT_FOUND = "User not found";
 
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
@@ -55,7 +56,8 @@ public class AuthService {
         @Transactional
         public AuthResponse register(RegisterRequest request) {
                 if (userRepository.existsByEmail(request.getEmail())) {
-                        throw new RuntimeException("Email already registered: " + request.getEmail());
+                        throw new com.authforge.exception.BadRequestException(
+                                        "Email already registered: " + request.getEmail());
                 }
 
                 User user = User.builder()
@@ -90,16 +92,18 @@ public class AuthService {
         }
 
         public AuthResponse login(LoginRequest request) {
-                Authentication authentication = authenticationManager.authenticate(
+                authenticationManager.authenticate(
                                 new UsernamePasswordAuthenticationToken(
                                                 request.getEmail(),
                                                 request.getPassword()));
 
                 User user = userRepository.findByEmail(request.getEmail())
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(
+                                                USER_NOT_FOUND));
 
                 if (featureFlags.isEmailVerification() && !user.isEmailVerified()) {
-                        throw new RuntimeException("Please verify your email before logging in");
+                        throw new com.authforge.exception.BadRequestException(
+                                        "Please verify your email before logging in");
                 }
 
                 if (featureFlags.isTwoFactor() && user.isTwoFactorEnabled()) {
@@ -118,18 +122,20 @@ public class AuthService {
 
         public AuthResponse verifyTwoFactor(String email, String code) {
                 if (!featureFlags.isTwoFactor()) {
-                        throw new RuntimeException("Two-factor authentication is disabled");
+                        throw new com.authforge.exception.BadRequestException("Two-factor authentication is disabled");
                 }
 
                 User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(
+                                                USER_NOT_FOUND));
 
                 if (!user.isTwoFactorEnabled() || user.getTwoFactorSecret() == null) {
-                        throw new RuntimeException("Two-factor authentication is not enabled");
+                        throw new com.authforge.exception.BadRequestException(
+                                        "Two-factor authentication is not enabled");
                 }
 
                 if (!totpService.verifyCode(user.getTwoFactorSecret(), code)) {
-                        throw new RuntimeException("Invalid 2FA code");
+                        throw new com.authforge.exception.BadRequestException("Invalid 2FA code");
                 }
 
                 log.info("2FA verified for: {}", user.getEmail());
@@ -139,7 +145,8 @@ public class AuthService {
         @Transactional
         public void verifyEmail(String token) {
                 User user = userRepository.findByVerificationToken(token)
-                                .orElseThrow(() -> new RuntimeException("Invalid or expired verification token"));
+                                .orElseThrow(() -> new com.authforge.exception.BadRequestException(
+                                                "Invalid or expired verification token"));
 
                 user.setEmailVerified(true);
                 user.setVerificationToken(null);
@@ -151,7 +158,8 @@ public class AuthService {
         public AuthResponse refreshToken(TokenRefreshRequest request) {
                 RefreshToken refreshToken = refreshTokenService
                                 .findByToken(request.getRefreshToken())
-                                .orElseThrow(() -> new RuntimeException("Refresh token not found"));
+                                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(
+                                                "Refresh token not found"));
 
                 refreshTokenService.verifyExpiration(refreshToken);
 
@@ -163,7 +171,8 @@ public class AuthService {
         @Transactional
         public void logout(String email) {
                 User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(
+                                                USER_NOT_FOUND));
 
                 refreshTokenService.deleteByUser(user);
                 log.info("User logged out: {}", email);
@@ -172,7 +181,8 @@ public class AuthService {
         @Transactional
         public String forgotPassword(String email) {
                 User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+                                .orElseThrow(() -> new com.authforge.exception.ResourceNotFoundException(
+                                                USER_NOT_FOUND + " with email: " + email));
 
                 String resetToken = UUID.randomUUID().toString();
                 user.setVerificationToken(resetToken);
@@ -191,7 +201,8 @@ public class AuthService {
         @Transactional
         public void resetPassword(PasswordResetRequest request) {
                 User user = userRepository.findByVerificationToken(request.getToken())
-                                .orElseThrow(() -> new RuntimeException("Invalid or expired reset token"));
+                                .orElseThrow(() -> new com.authforge.exception.BadRequestException(
+                                                "Invalid or expired reset token"));
 
                 user.setPassword(passwordEncoder.encode(request.getNewPassword()));
                 user.setVerificationToken(null);

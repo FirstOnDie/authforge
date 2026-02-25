@@ -1,46 +1,17 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-
-  jackson:
-    default-property-inclusion: non_null
-
-  mail:
-    host: localhost
-    port: 1025
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            clientId: test-client-id
+            clientSecret: test-client-secret
 
 authforge:
-  jwt:
-    secret: test-secret-key-long-enough-for-hs256-algorithm-to-work-properly-1234
-    access-token-expiration: 900000
-    refresh-token-expiration: 604800000
   cors:
-    allowed-origins: http://localhost:4000
-  oauth2:
-    redirect-uri: http://localhost:4000
-  rate-limit:
-    requests-per-minute: 30
-  features:
-    oauth2: false
-    two-factor: true
-    rate-limiting: true
-    email-verification: false
+    allowed-origins: http://localhost:3000
   app:
-    name: AuthForge-Test
-    url: http://localhost:4000
-    from-email: test@authforge.local
-
-logging:
-  level:
-    com.authforge: WARN
+    frontend-url: http://localhost:3000
+    jwtSecret: 9a4f2c8d3b7a1e6f45c8a0b3f267d8b1d4e6f3c8a9d2b5f8e3a9c8b5f6v8a3d9
+    jwtExpirationMs: 3600000
+    jwtRefreshExpirationMs: 86400000

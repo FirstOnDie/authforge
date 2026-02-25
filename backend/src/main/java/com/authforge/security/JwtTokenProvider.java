@@ -44,15 +44,11 @@ public class JwtTokenProvider {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             String email = extractEmail(token);
-            return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
+            return email.equals(userDetails.getUsername());
         } catch (JwtException | IllegalArgumentException e) {
             log.warn("Invalid JWT token: {}", e.getMessage());
             return false;
         }
-    }
-
-    private boolean isTokenExpired(String token) {
-        return extractClaims(token).getExpiration().before(new Date());
     }
 
     private Claims extractClaims(String token) {

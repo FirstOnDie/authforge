@@ -10,39 +10,56 @@ import static org.assertj.core.api.Assertions.assertThat;
 class JwtTokenProviderTest {
 
     private JwtTokenProvider jwtTokenProvider;
+    private UserDetails userDetails;
 
     @BeforeEach
     void setUp() {
-        jwtTokenProvider = new JwtTokenProvider();
-        org.springframework.test.util.ReflectionTestUtils.setField(
-                jwtTokenProvider, "jwtSecret",
-                "test-secret-key-long-enough-for-hs256-algorithm-to-work-properly-1234");
-        org.springframework.test.util.ReflectionTestUtils.setField(
-                jwtTokenProvider, "accessTokenExpiration", 900000L);
-    }
+        String secret = "test-secret-key-long-enough-for-hs256-algorithm-to-work-properly-1234";
+        jwtTokenProvider = new JwtTokenProvider(secret, 900000L);
 
-    @Test
-    void shouldGenerateAndValidateToken() {
-        UserDetails userDetails = User.builder()
+        userDetails = User.builder()
                 .username("test@example.com")
                 .password("password")
                 .roles("USER")
                 .build();
+    }
 
+    @Test
+    void shouldGenerateToken() {
         String token = jwtTokenProvider.generateAccessToken(userDetails);
-
         assertThat(token).isNotBlank();
-        assertThat(jwtTokenProvider.validateToken(token)).isTrue();
-        assertThat(jwtTokenProvider.extractUsername(token)).isEqualTo("test@example.com");
+    }
+
+    @Test
+    void shouldExtractEmail() {
+        String token = jwtTokenProvider.generateAccessToken(userDetails);
+        assertThat(jwtTokenProvider.extractEmail(token)).isEqualTo("test@example.com");
+    }
+
+    @Test
+    void shouldValidateToken() {
+        String token = jwtTokenProvider.generateAccessToken(userDetails);
+        assertThat(jwtTokenProvider.isTokenValid(token, userDetails)).isTrue();
     }
 
     @Test
     void shouldRejectInvalidToken() {
-        assertThat(jwtTokenProvider.validateToken("invalid.token.here")).isFalse();
+        assertThat(jwtTokenProvider.isTokenValid("invalid.token.here", userDetails)).isFalse();
     }
 
     @Test
     void shouldReturnCorrectExpiration() {
         assertThat(jwtTokenProvider.getAccessTokenExpiration()).isEqualTo(900000L);
+    }
+
+    @Test
+    void shouldRejectTokenWithDifferentEmail() {
+        String token = jwtTokenProvider.generateAccessToken(userDetails);
+        UserDetails differentUser = User.builder()
+                .username("wrong@example.com")
+                .password("password")
+                .roles("USER")
+                .build();
+        assertThat(jwtTokenProvider.isTokenValid(token, differentUser)).isFalse();
     }
 }

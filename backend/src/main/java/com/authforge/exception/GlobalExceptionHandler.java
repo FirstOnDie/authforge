@@ -18,6 +18,9 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String TIMESTAMP_KEY = "timestamp";
+    private static final String STATUS_KEY = "status";
+    private static final String ERROR_KEY = "error";
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
@@ -27,18 +30,18 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest().body(Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "status", 400,
-                "error", "Validation Failed",
+                TIMESTAMP_KEY, LocalDateTime.now().toString(),
+                STATUS_KEY, 400,
+                ERROR_KEY, "Validation Failed",
                 "details", errors));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "status", 401,
-                "error", "Invalid email or password"));
+                TIMESTAMP_KEY, LocalDateTime.now().toString(),
+                STATUS_KEY, 401,
+                ERROR_KEY, "Invalid email or password"));
     }
 
     @ExceptionHandler(RuntimeException.class)
@@ -51,8 +54,8 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.status(status).body(Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "status", status.value(),
-                "error", ex.getMessage() != null ? ex.getMessage() : "Internal error"));
+                TIMESTAMP_KEY, LocalDateTime.now().toString(),
+                STATUS_KEY, status.value(),
+                ERROR_KEY, ex.getMessage() != null ? ex.getMessage() : "Internal error"));
     }
 }

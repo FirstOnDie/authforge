@@ -45,7 +45,7 @@ public class RefreshTokenService {
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.isExpired()) {
             repository.delete(token);
-            throw new RuntimeException("Refresh token expired. Please login again.");
+            throw new com.authforge.exception.BadRequestException("Refresh token expired. Please login again.");
         }
         return token;
     }

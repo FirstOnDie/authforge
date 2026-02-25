@@ -16,29 +16,37 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
+
 @Service
-public class CustomOAuth2UserService extends DefaultOAuth2UserService {
+public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
 
     private static final Logger log = LoggerFactory.getLogger(CustomOAuth2UserService.class);
 
     private final UserRepository userRepository;
+    private OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate = new DefaultOAuth2UserService();
 
     public CustomOAuth2UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    // For testing
+    public void setDelegate(OAuth2UserService<OAuth2UserRequest, OAuth2User> delegate) {
+        this.delegate = delegate;
+    }
+
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User oAuth2User = super.loadUser(userRequest);
+        OAuth2User oAuth2User = delegate.loadUser(userRequest);
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
 
         AuthProvider provider = AuthProvider.valueOf(registrationId.toUpperCase());
         Map<String, Object> attributes = oAuth2User.getAttributes();
 
-        String email = extractEmail(attributes, registrationId);
+        String email = extractEmail(attributes);
         String name = extractName(attributes, registrationId);
-        String providerId = extractProviderId(attributes, registrationId);
+        String providerId = extractProviderId(attributes);
 
         if (email == null || email.isBlank()) {
             throw new OAuth2AuthenticationException("Email not available from " + registrationId);
@@ -69,7 +77,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return oAuth2User;
     }
 
-    private String extractEmail(Map<String, Object> attributes, String registrationId) {
+    private String extractEmail(Map<String, Object> attributes) {
         return (String) attributes.get("email");
     }
 
@@ -81,7 +89,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return (String) attributes.get("name");
     }
 
-    private String extractProviderId(Map<String, Object> attributes, String registrationId) {
+    private String extractProviderId(Map<String, Object> attributes) {
         Object id = attributes.get("sub");
         if (id == null) {
             id = attributes.get("id");

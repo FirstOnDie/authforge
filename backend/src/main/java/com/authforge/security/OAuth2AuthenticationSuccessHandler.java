@@ -52,8 +52,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             email = oAuth2User.getAttribute("login") + "@github.com";
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("OAuth2 user not found: " + email));
+        final String userEmail = email;
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("OAuth2 user not found: " + userEmail));
 
         UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())

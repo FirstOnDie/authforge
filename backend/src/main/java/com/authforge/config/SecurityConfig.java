@@ -31,6 +31,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@SuppressWarnings("squid:S4502") // Disabling CSRF is intentional for a stateless API
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;

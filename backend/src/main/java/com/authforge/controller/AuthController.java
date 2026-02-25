@@ -14,6 +14,8 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    private static final String MESSAGE_KEY = "message";
+
     private final AuthService authService;
 
     public AuthController(AuthService authService) {
@@ -43,7 +45,7 @@ public class AuthController {
     @GetMapping("/verify")
     public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
-        return ResponseEntity.ok(Map.of("message", "Email verified successfully! You can now log in."));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Email verified successfully! You can now log in."));
     }
 
     @PostMapping("/refresh")
@@ -55,20 +57,20 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(Authentication authentication) {
         authService.logout(authentication.getName());
-        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Logged out successfully"));
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         authService.forgotPassword(email);
-        return ResponseEntity.ok(Map.of("message", "If the email exists, a reset link has been sent."));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "If the email exists, a reset link has been sent."));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(
             @Valid @RequestBody PasswordResetRequest request) {
         authService.resetPassword(request);
-        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Password reset successfully"));
     }
 }

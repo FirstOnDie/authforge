@@ -4,6 +4,7 @@ import com.authforge.config.FeatureFlags;
 import com.authforge.dto.AuthResponse;
 import com.authforge.dto.LoginRequest;
 import com.authforge.dto.RegisterRequest;
+import com.authforge.dto.TokenRefreshRequest;
 import com.authforge.model.RefreshToken;
 import com.authforge.model.Role;
 import com.authforge.model.User;
@@ -221,5 +222,238 @@ class AuthServiceTest {
 
         assertThat(response.isRequiresEmailVerification()).isTrue();
         verify(emailService).sendVerificationEmail(eq("new@example.com"), anyString());
+    }
+
+    @Test
+    void shouldFailLoginIfUserNotFound() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("unknown@example.com");
+        request.setPassword("password123");
+
+        when(authenticationManager.authenticate(any())).thenReturn(mock(Authentication.class));
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(com.authforge.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void shouldFailLoginWhenEmailNotVerifiedAndFeatureEnabled() {
+        featureFlags.setEmailVerification(true);
+        testUser.setEmailVerified(false);
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("test@example.com");
+        request.setPassword("password123");
+
+        when(authenticationManager.authenticate(any())).thenReturn(mock(Authentication.class));
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(com.authforge.exception.BadRequestException.class)
+                .hasMessageContaining("Please verify your email before logging in");
+    }
+
+    @Test
+    void shouldFailVerifyTwoFactorIfTwoFactorDisabledGlobally() {
+        featureFlags.setTwoFactor(false);
+        assertThatThrownBy(() -> authService.verifyTwoFactor("test@example.com", "123456"))
+                .isInstanceOf(com.authforge.exception.BadRequestException.class)
+                .hasMessageContaining("Two-factor authentication is disabled");
+    }
+
+    @Test
+    void shouldFailVerifyTwoFactorIfUserTwoFactorDisabled() {
+        testUser.setTwoFactorEnabled(false);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        assertThatThrownBy(() -> authService.verifyTwoFactor("test@example.com", "123456"))
+                .isInstanceOf(com.authforge.exception.BadRequestException.class)
+                .hasMessageContaining("Two-factor authentication is not enabled");
+    }
+
+    @Test
+    void shouldFailVerifyEmailWithInvalidToken() {
+        when(userRepository.findByVerificationToken("invalid")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.verifyEmail("invalid"))
+                .isInstanceOf(com.authforge.exception.BadRequestException.class)
+                .hasMessageContaining("Invalid or expired verification token");
+    }
+
+    @Test
+    void shouldFailRefreshTokenIfTokenNotFound() {
+        com.authforge.dto.TokenRefreshRequest req = new com.authforge.dto.TokenRefreshRequest();
+        req.setRefreshToken("invalid");
+
+        when(refreshTokenService.findByToken("invalid")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.refreshToken(req))
+                .isInstanceOf(com.authforge.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("Refresh token not found");
+    }
+
+    @Test
+    void shouldFailLogoutIfUserNotFound() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.logout("unknown@example.com"))
+                .isInstanceOf(com.authforge.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    @Test
+    void shouldForgotPassword() {
+        featureFlags.setEmailVerification(true);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        String token = authService.forgotPassword("test@example.com");
+
+        assertThat(token).isNotNull();
+        verify(userRepository).save(testUser);
+        verify(emailService).sendPasswordResetEmail(eq("test@example.com"), anyString());
+    }
+
+    @Test
+    void shouldForgotPasswordWithoutEmailVerificationFeature() {
+        featureFlags.setEmailVerification(false);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        String token = authService.forgotPassword("test@example.com");
+
+        assertThat(token).isNotNull();
+        verify(userRepository).save(testUser);
+        verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString());
+    }
+
+    @Test
+    void shouldFailForgotPasswordIfUserNotFound() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.forgotPassword("unknown@example.com"))
+                .isInstanceOf(com.authforge.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("User not found with email: unknown@example.com");
+    }
+
+    @Test
+    void shouldResetPassword() {
+        com.authforge.dto.PasswordResetRequest request = new com.authforge.dto.PasswordResetRequest();
+        request.setToken("reset123");
+        request.setNewPassword("newpass123");
+
+        when(userRepository.findByVerificationToken("reset123")).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.encode("newpass123")).thenReturn("encoded-newpass123");
+
+        authService.resetPassword(request);
+
+        assertThat(testUser.getPassword()).isEqualTo("encoded-newpass123");
+        assertThat(testUser.getVerificationToken()).isNull();
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void shouldFailResetPasswordIfTokenInvalid() {
+        com.authforge.dto.PasswordResetRequest request = new com.authforge.dto.PasswordResetRequest();
+        request.setToken("invalid");
+
+        when(userRepository.findByVerificationToken("invalid")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.resetPassword(request))
+                .isInstanceOf(com.authforge.exception.BadRequestException.class)
+                .hasMessageContaining("Invalid or expired reset token");
+    }
+
+    @Test
+    void shouldLoginUserWithNullPassword() {
+        testUser.setPassword(null);
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("test@example.com");
+        request.setPassword("password123");
+
+        Authentication auth = mock(Authentication.class);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(jwtTokenProvider.generateAccessToken(any())).thenReturn("access-token");
+        when(jwtTokenProvider.getAccessTokenExpiration()).thenReturn(900000L);
+        when(refreshTokenService.createRefreshToken(any(User.class))).thenReturn(testRefreshToken);
+
+        AuthResponse response = authService.login(request);
+
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+        assertThat(response.isRequiresTwoFactor()).isFalse();
+    }
+
+    @Test
+    void shouldFailVerifyTwoFactorIfSecretIsNull() {
+        testUser.setTwoFactorEnabled(true);
+        testUser.setTwoFactorSecret(null);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+
+        assertThatThrownBy(() -> authService.verifyTwoFactor("test@example.com", "123456"))
+                .isInstanceOf(com.authforge.exception.BadRequestException.class)
+                .hasMessageContaining("Two-factor authentication is not enabled");
+    }
+
+    @Test
+    void shouldLoginUserWhenEmailVerifiedAndFeatureEnabled() {
+        featureFlags.setEmailVerification(true);
+        testUser.setEmailVerified(true);
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("test@example.com");
+        request.setPassword("password123");
+
+        Authentication auth = mock(Authentication.class);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(jwtTokenProvider.generateAccessToken(any())).thenReturn("access-token");
+        when(jwtTokenProvider.getAccessTokenExpiration()).thenReturn(900000L);
+        when(refreshTokenService.createRefreshToken(any(User.class))).thenReturn(testRefreshToken);
+
+        AuthResponse response = authService.login(request);
+
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+        assertThat(response.isRequiresTwoFactor()).isFalse();
+    }
+
+    @Test
+    void shouldLoginUserWhenTwoFactorDisabledGlobally() {
+        featureFlags.setTwoFactor(false);
+        testUser.setTwoFactorEnabled(true);
+
+        LoginRequest request = new LoginRequest();
+        request.setEmail("test@example.com");
+        request.setPassword("password123");
+
+        Authentication auth = mock(Authentication.class);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(auth);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(jwtTokenProvider.generateAccessToken(any())).thenReturn("access-token");
+        when(jwtTokenProvider.getAccessTokenExpiration()).thenReturn(900000L);
+        when(refreshTokenService.createRefreshToken(any(User.class))).thenReturn(testRefreshToken);
+
+        AuthResponse response = authService.login(request);
+
+        assertThat(response.getAccessToken()).isEqualTo("access-token");
+        assertThat(response.isRequiresTwoFactor()).isFalse();
+    }
+
+    @Test
+    void shouldRefreshTokenSuccessfully() {
+        TokenRefreshRequest request = new TokenRefreshRequest();
+        request.setRefreshToken("refresh-token-value");
+
+        when(refreshTokenService.findByToken("refresh-token-value")).thenReturn(Optional.of(testRefreshToken));
+        when(refreshTokenService.verifyExpiration(testRefreshToken)).thenReturn(testRefreshToken);
+        when(jwtTokenProvider.generateAccessToken(any())).thenReturn("new-access-token");
+        when(jwtTokenProvider.getAccessTokenExpiration()).thenReturn(900000L);
+        when(refreshTokenService.createRefreshToken(testUser)).thenReturn(testRefreshToken);
+
+        AuthResponse response = authService.refreshToken(request);
+
+        assertThat(response.getAccessToken()).isEqualTo("new-access-token");
+        assertThat(response.getRefreshToken()).isEqualTo("refresh-token-value");
     }
 }
