@@ -41,6 +41,11 @@ public class User {
     private String providerId;
 
     @Builder.Default
+    private boolean twoFactorEnabled = false;
+
+    private String twoFactorSecret;
+
+    @Builder.Default
     private boolean enabled = true;
 
     private String verificationToken;

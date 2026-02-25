@@ -319,6 +319,19 @@ body {
     box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
 }
 
+.qr-container {
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.qr-container img {
+    border-radius: 8px;
+}
+
 .auth-links {
     display: flex;
     flex-direction: column;

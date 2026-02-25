@@ -46,5 +46,9 @@ const Auth = (() => {
             const user = this.getUser();
             return user?.role === 'ADMIN';
         },
+
+        updateUser(user) {
+            localStorage.setItem(KEYS.USER, JSON.stringify(user));
+        },
     };
 })();

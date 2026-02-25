@@ -80,6 +80,30 @@
                 <div class="auth-error" id="login-error"></div>
             </form>
 
+            <form class="auth-form hidden" id="twofa-form">
+                <h2>Two-Factor Verification</h2>
+                <p class="auth-subtitle">Enter the 6-digit code from your authenticator app</p>
+
+                <div class="form-group">
+                    <label for="twofa-code"><i class="fas fa-shield-alt"></i> Code</label>
+                    <input type="text" id="twofa-code" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required
+                        autocomplete="one-time-code">
+                </div>
+
+                <input type="hidden" id="twofa-email">
+
+                <button type="submit" class="btn btn-primary" id="twofa-btn">
+                    <span>Verify</span>
+                    <i class="fas fa-check"></i>
+                </button>
+
+                <div class="auth-links">
+                    <a href="#" id="show-login-from-twofa">Back to login</a>
+                </div>
+
+                <div class="auth-error" id="twofa-error"></div>
+            </form>
+
             <!-- Register Form -->
             <form class="auth-form hidden" id="register-form">
                 <h2>Create account</h2>
@@ -201,6 +225,29 @@
                     </div>
                     <div class="info-detail">
                         <span>Refresh:</span> <strong>Automatic</strong>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <div class="info-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Two-Factor Auth</h3>
+                    <div class="info-detail">
+                        <span>Status:</span> <strong id="twofa-status">Disabled</strong>
+                    </div>
+                    <div id="twofa-setup-area">
+                        <button class="btn btn-small" id="twofa-toggle-btn">
+                            <i class="fas fa-lock"></i> Enable 2FA
+                        </button>
+                    </div>
+                    <div id="twofa-qr-area" class="hidden">
+                        <p style="font-size:0.85rem;color:var(--text-muted);margin:12px 0 8px">Scan with your
+                            authenticator app:</p>
+                        <div class="qr-container" id="qr-container"></div>
+                        <div class="form-group" style="margin-top:12px">
+                            <input type="text" id="twofa-confirm-code" placeholder="Enter 6-digit code" maxlength="6">
+                        </div>
+                        <button class="btn btn-small" id="twofa-confirm-btn">
+                            <i class="fas fa-check"></i> Confirm & Enable
+                        </button>
                     </div>
                 </div>
             </div>

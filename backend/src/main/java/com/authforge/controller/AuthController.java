@@ -32,6 +32,14 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/2fa/verify")
+    public ResponseEntity<AuthResponse> verifyTwoFactor(
+            @Valid @RequestBody TwoFactorLoginRequest request) {
+        AuthResponse response = authService.verifyTwoFactor(
+                request.getEmail(), request.getCode());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody TokenRefreshRequest request) {
         AuthResponse response = authService.refreshToken(request);

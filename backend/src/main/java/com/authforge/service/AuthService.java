@@ -28,18 +28,21 @@ public class AuthService {
         private final JwtTokenProvider jwtTokenProvider;
         private final RefreshTokenService refreshTokenService;
         private final AuthenticationManager authenticationManager;
+        private final TotpService totpService;
 
         public AuthService(
                         UserRepository userRepository,
                         PasswordEncoder passwordEncoder,
                         JwtTokenProvider jwtTokenProvider,
                         RefreshTokenService refreshTokenService,
-                        AuthenticationManager authenticationManager) {
+                        AuthenticationManager authenticationManager,
+                        TotpService totpService) {
                 this.userRepository = userRepository;
                 this.passwordEncoder = passwordEncoder;
                 this.jwtTokenProvider = jwtTokenProvider;
                 this.refreshTokenService = refreshTokenService;
                 this.authenticationManager = authenticationManager;
+                this.totpService = totpService;
         }
 
         @Transactional
@@ -71,8 +74,33 @@ public class AuthService {
                 User user = userRepository.findByEmail(request.getEmail())
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-                log.info("User logged in: {}", user.getEmail());
+                if (user.isTwoFactorEnabled()) {
+                        log.info("2FA required for: {}", user.getEmail());
+                        return AuthResponse.builder()
+                                        .requiresTwoFactor(true)
+                                        .user(AuthResponse.UserDto.builder()
+                                                        .email(user.getEmail())
+                                                        .build())
+                                        .build();
+                }
 
+                log.info("User logged in: {}", user.getEmail());
+                return generateAuthResponse(user);
+        }
+
+        public AuthResponse verifyTwoFactor(String email, String code) {
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                if (!user.isTwoFactorEnabled() || user.getTwoFactorSecret() == null) {
+                        throw new RuntimeException("Two-factor authentication is not enabled");
+                }
+
+                if (!totpService.verifyCode(user.getTwoFactorSecret(), code)) {
+                        throw new RuntimeException("Invalid 2FA code");
+                }
+
+                log.info("2FA verified for: {}", user.getEmail());
                 return generateAuthResponse(user);
         }
 
@@ -127,7 +155,7 @@ public class AuthService {
         private AuthResponse generateAuthResponse(User user) {
                 UserDetails userDetails = org.springframework.security.core.userdetails.User.builder()
                                 .username(user.getEmail())
-                                .password(user.getPassword())
+                                .password(user.getPassword() != null ? user.getPassword() : "")
                                 .roles(user.getRole().name())
                                 .build();
 
@@ -144,6 +172,7 @@ public class AuthService {
                                                 .name(user.getName())
                                                 .email(user.getEmail())
                                                 .role(user.getRole().name())
+                                                .twoFactorEnabled(user.isTwoFactorEnabled())
                                                 .build())
                                 .build();
         }

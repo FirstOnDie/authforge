@@ -34,4 +34,24 @@ public class UserService {
         user.setRole(Role.valueOf(newRole.toUpperCase()));
         return userRepository.save(user);
     }
+
+    @Transactional
+    public void enableTwoFactor(Long userId, String secret) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        user.setTwoFactorSecret(secret);
+        user.setTwoFactorEnabled(true);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void disableTwoFactor(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        user.setTwoFactorSecret(null);
+        user.setTwoFactorEnabled(false);
+        userRepository.save(user);
+    }
 }

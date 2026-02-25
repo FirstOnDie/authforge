@@ -25,8 +25,8 @@
 | Frontend Demo (Login, Register, Dashboard, Admin) | ✅ |
 | Docker Compose (PostgreSQL + Backend + Frontend) | ✅ |
 | OAuth2 (Google, GitHub) | ✅ |
-| Two-Factor Authentication (TOTP) | 🔜 v1.2 |
-| Rate Limiting | 🔜 v1.2 |
+| Two-Factor Authentication (TOTP) | ✅ |
+| Rate Limiting | ✅ |
 
 ---
 
@@ -193,6 +193,36 @@ All configuration is done via environment variables (see `.env.example`):
 
 ---
 
+## 🛡️ Two-Factor Authentication (TOTP)
+
+AuthForge supports TOTP-based 2FA compatible with Google Authenticator, Authy, and similar apps.
+
+**Flow:**
+1. User enables 2FA from the dashboard → scans QR code with authenticator app
+2. Confirms with a 6-digit code → 2FA is activated
+3. On next login, after entering email/password, a TOTP code is required
+4. User can disable 2FA from the dashboard at any time
+
+**API Endpoints:**
+- `POST /api/2fa/setup` — Generate TOTP secret + QR URI (authenticated)
+- `POST /api/2fa/enable` — Verify code and enable 2FA (authenticated)
+- `POST /api/2fa/disable` — Disable 2FA (authenticated)
+- `POST /api/auth/2fa/verify` — Verify TOTP code during login (public)
+
+---
+
+## ⏱️ Rate Limiting
+
+Auth endpoints (`/api/auth/**`) are rate-limited to prevent brute-force attacks.
+
+| Setting | Default | Env Variable |
+|---------|---------|-------------|
+| Requests per minute (per IP) | 30 | `RATE_LIMIT_RPM` |
+
+When the limit is exceeded, the API returns HTTP `429 Too Many Requests`.
+
+---
+
 ## 🧪 Testing the API
 
 ```bash
@@ -217,7 +247,7 @@ curl -X GET http://localhost:8090/api/users/me \
 
 - [x] **v1.0** — JWT Auth, Roles, Password Recovery, Docker
 - [x] **v1.1** — OAuth2 (Google, GitHub)
-- [ ] **v1.2** — 2FA (TOTP), Rate Limiting
+- [x] **v1.2** — 2FA (TOTP), Rate Limiting
 - [ ] **v2.0** — Email Service, Account Verification
 
 ---

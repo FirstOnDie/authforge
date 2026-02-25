@@ -13,6 +13,8 @@ public class AuthResponse {
     private String tokenType;
     private long expiresIn;
     private UserDto user;
+    @Builder.Default
+    private boolean requiresTwoFactor = false;
 
     @Data
     @AllArgsConstructor
@@ -22,5 +24,7 @@ public class AuthResponse {
         private String name;
         private String email;
         private String role;
+        @Builder.Default
+        private boolean twoFactorEnabled = false;
     }
 }

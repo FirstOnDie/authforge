@@ -3,6 +3,7 @@ package com.authforge.config;
 import com.authforge.security.CustomOAuth2UserService;
 import com.authforge.security.JwtAuthFilter;
 import com.authforge.security.OAuth2AuthenticationSuccessHandler;
+import com.authforge.security.RateLimitFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +34,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final UserDetailsService userDetailsService;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
@@ -42,10 +44,12 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthFilter jwtAuthFilter,
+            RateLimitFilter rateLimitFilter,
             UserDetailsService userDetailsService,
             CustomOAuth2UserService customOAuth2UserService,
             OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.rateLimitFilter = rateLimitFilter;
         this.userDetailsService = userDetailsService;
         this.customOAuth2UserService = customOAuth2UserService;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
@@ -66,6 +70,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
                         .successHandler(oAuth2SuccessHandler))
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
