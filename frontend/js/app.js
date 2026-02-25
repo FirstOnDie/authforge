@@ -1,15 +1,5 @@
-/**
- * AuthForge — Main App Controller
- *
- * Handles:
- * - Form submissions (login, register, forgot password)
- * - View routing (auth view ↔ dashboard view)
- * - Dashboard rendering (profile, token info, admin panel)
- * - Toast notifications
- */
 document.addEventListener('DOMContentLoaded', () => {
 
-    // ── Elements ──
     const loadingScreen = document.getElementById('loading-screen');
     const authView = document.getElementById('auth-view');
     const dashboardView = document.getElementById('dashboard-view');
@@ -18,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerForm = document.getElementById('register-form');
     const forgotForm = document.getElementById('forgot-form');
 
-    // ── Initialize ──
     setTimeout(() => {
         loadingScreen.classList.add('hidden');
 
@@ -26,10 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showDashboard();
         }
     }, 1600);
-
-    // ══════════════════════════════
-    //  FORM SWITCHING
-    // ══════════════════════════════
 
     document.getElementById('show-register').addEventListener('click', (e) => {
         e.preventDefault();
@@ -58,10 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
         forgotForm.classList.add('hidden');
     });
 
-    // ══════════════════════════════
-    //  LOGIN
-    // ══════════════════════════════
-
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const errorEl = document.getElementById('login-error');
@@ -80,10 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.classList.add('visible');
         }
     });
-
-    // ══════════════════════════════
-    //  REGISTER
-    // ══════════════════════════════
 
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -105,10 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ══════════════════════════════
-    //  FORGOT PASSWORD
-    // ══════════════════════════════
-
     forgotForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const errorEl = document.getElementById('forgot-error');
@@ -129,24 +102,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ══════════════════════════════
-    //  LOGOUT
-    // ══════════════════════════════
-
     document.getElementById('logout-btn').addEventListener('click', async () => {
         try {
             await API.logout();
         } catch (err) {
-            // Logout might fail if token is expired — that's fine
         }
         Auth.clear();
         toast('Logged out', 'success');
         showAuth();
     });
-
-    // ══════════════════════════════
-    //  DASHBOARD NAVIGATION
-    // ══════════════════════════════
 
     document.getElementById('nav-dashboard').addEventListener('click', () => {
         setActiveNav('dashboard');
@@ -167,10 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ══════════════════════════════
-    //  COPY TOKEN
-    // ══════════════════════════════
-
     document.getElementById('copy-token-btn').addEventListener('click', () => {
         const token = Auth.getAccessToken();
         if (token) {
@@ -178,10 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
             toast('Token copied to clipboard!', 'success');
         }
     });
-
-    // ══════════════════════════════
-    //  VIEW MANAGEMENT
-    // ══════════════════════════════
 
     function showDashboard() {
         authView.classList.add('hidden');
@@ -201,11 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = Auth.getUser();
         if (!user) return showAuth();
 
-        // Update header
         document.getElementById('user-name').textContent = user.name;
         document.getElementById('user-role').textContent = user.role;
 
-        // Show admin nav if admin
         const adminNav = document.getElementById('nav-admin');
         if (user.role === 'ADMIN') {
             adminNav.classList.remove('hidden');
@@ -213,21 +167,15 @@ document.addEventListener('DOMContentLoaded', () => {
             adminNav.classList.add('hidden');
         }
 
-        // Profile card
         document.getElementById('profile-name').textContent = user.name;
         document.getElementById('profile-email').textContent = user.email;
         document.getElementById('profile-role').textContent = user.role;
 
-        // Token info
         document.getElementById('token-display').textContent = Auth.getAccessToken();
         const expiresIn = Auth.getExpiresIn();
         document.getElementById('token-expiry').textContent =
             expiresIn ? `${Math.round(expiresIn / 60000)} minutes` : '—';
     }
-
-    // ══════════════════════════════
-    //  ADMIN PANEL
-    // ══════════════════════════════
 
     async function loadAdminUsers() {
         const tbody = document.getElementById('users-table-body');
@@ -253,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Global function for inline onclick
     window.toggleRole = async (userId, currentRole) => {
         const newRole = currentRole === 'ADMIN' ? 'USER' : 'ADMIN';
         try {
@@ -264,10 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
             toast(err.message, 'error');
         }
     };
-
-    // ══════════════════════════════
-    //  TOAST NOTIFICATIONS
-    // ══════════════════════════════
 
     function toast(message, type = 'success') {
         const container = document.getElementById('toast-container');

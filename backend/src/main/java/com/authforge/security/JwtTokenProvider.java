@@ -12,16 +12,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-/**
- * JWT Token Provider.
- *
- * Handles all JWT operations:
- * - Generate access tokens
- * - Validate tokens
- * - Extract claims (email, expiration)
- *
- * Uses HMAC-SHA256 for signing.
- */
 @Component
 public class JwtTokenProvider {
 
@@ -38,9 +28,6 @@ public class JwtTokenProvider {
         this.accessTokenExpiration = accessTokenExpiration;
     }
 
-    /**
-     * Generate an access token for the given user.
-     */
     public String generateAccessToken(UserDetails userDetails) {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
@@ -50,16 +37,10 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    /**
-     * Extract the email (subject) from a JWT token.
-     */
     public String extractEmail(String token) {
         return extractClaims(token).getSubject();
     }
 
-    /**
-     * Validate a JWT token against the given UserDetails.
-     */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
             String email = extractEmail(token);

@@ -9,12 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Admin Controller — requires ADMIN role.
- *
- * Only users with Role.ADMIN can access these endpoints
- * (enforced at SecurityConfig level).
- */
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -25,10 +19,6 @@ public class AdminController {
         this.userService = userService;
     }
 
-    /**
-     * GET /api/admin/users
-     * List all users in the system.
-     */
     @GetMapping("/users")
     public ResponseEntity<List<AuthResponse.UserDto>> getAllUsers() {
         List<AuthResponse.UserDto> users = userService.getAllUsers().stream()
@@ -43,12 +33,6 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
 
-    /**
-     * PUT /api/admin/users/{id}/role
-     * Change a user's role.
-     *
-     * Body: { "role": "ADMIN" } or { "role": "USER" }
-     */
     @PutMapping("/users/{id}/role")
     public ResponseEntity<AuthResponse.UserDto> changeUserRole(
             @PathVariable Long id,

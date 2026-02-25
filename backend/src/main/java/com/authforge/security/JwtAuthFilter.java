@@ -17,20 +17,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * JWT Authentication Filter.
- *
- * Intercepts every request, checks for a Bearer token in the
- * Authorization header, validates it, and sets the Spring Security
- * context if valid.
- *
- * Flow:
- * 1. Extract "Authorization: Bearer <token>" header
- * 2. Parse the JWT to get the user email
- * 3. Load the user from the database
- * 4. Validate the token against the user
- * 5. Set the authentication in SecurityContext
- */
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
@@ -50,7 +36,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
 
-        // 1. Extract the token from the header
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -61,19 +46,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String jwt = authHeader.substring(7);
 
         try {
-            // 2. Extract email from the token
             String email = jwtTokenProvider.extractEmail(jwt);
 
-            // 3. If we have a valid email and no existing authentication
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-                // 4. Load user details from DB
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                // 5. Validate the token
                 if (jwtTokenProvider.isTokenValid(jwt, userDetails)) {
-
-                    // 6. Create authentication and set it in context
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
 

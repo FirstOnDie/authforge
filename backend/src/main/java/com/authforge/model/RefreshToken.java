@@ -5,12 +5,6 @@ import lombok.*;
 
 import java.time.Instant;
 
-/**
- * Refresh token entity.
- *
- * Each user can have one active refresh token at a time.
- * Tokens are rotated on each refresh (old one is deleted, new one issued).
- */
 @Entity
 @Table(name = "refresh_tokens")
 @Getter
@@ -34,9 +28,6 @@ public class RefreshToken {
     @Column(nullable = false)
     private Instant expiryDate;
 
-    /**
-     * Check if this token has expired.
-     */
     public boolean isExpired() {
         return expiryDate.isBefore(Instant.now());
     }

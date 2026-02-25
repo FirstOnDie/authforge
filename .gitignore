@@ -1,10 +1,8 @@
-# ── Java / Maven ──
 backend/target/
 *.class
 *.jar
 *.war
 
-# ── IDE ──
 .idea/
 *.iml
 .vscode/
@@ -12,15 +10,11 @@ backend/target/
 .project
 .classpath
 
-# ── OS ──
 .DS_Store
 Thumbs.db
 
-# ── Docker ──
 postgres_data/
 
-# ── Environment ──
 .env
 
-# ── Logs ──
 *.log

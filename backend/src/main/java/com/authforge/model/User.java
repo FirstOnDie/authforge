@@ -7,12 +7,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-/**
- * Core user entity.
- *
- * Stores credentials, profile info, and role.
- * The password is always BCrypt-hashed — never stored in plaintext.
- */
 @Entity
 @Table(name = "users")
 @Getter
@@ -43,7 +37,6 @@ public class User {
     @Builder.Default
     private boolean enabled = true;
 
-    /** Token used for email verification or password reset */
     private String verificationToken;
 
     @CreationTimestamp

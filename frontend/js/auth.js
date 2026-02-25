@@ -1,11 +1,3 @@
-/**
- * AuthForge — Auth State Manager
- *
- * Manages JWT tokens in localStorage:
- * - Store / retrieve / clear access and refresh tokens
- * - Store user info
- * - Check authentication status
- */
 const Auth = (() => {
     const KEYS = {
         ACCESS_TOKEN: 'authforge_access_token',
@@ -15,9 +7,6 @@ const Auth = (() => {
     };
 
     return {
-        /**
-         * Save authentication data from a successful login/register response.
-         */
         save(response) {
             localStorage.setItem(KEYS.ACCESS_TOKEN, response.accessToken);
             localStorage.setItem(KEYS.REFRESH_TOKEN, response.refreshToken);
@@ -25,9 +14,6 @@ const Auth = (() => {
             localStorage.setItem(KEYS.USER, JSON.stringify(response.user));
         },
 
-        /**
-         * Clear all authentication data (logout).
-         */
         clear() {
             localStorage.removeItem(KEYS.ACCESS_TOKEN);
             localStorage.removeItem(KEYS.REFRESH_TOKEN);
@@ -35,9 +21,6 @@ const Auth = (() => {
             localStorage.removeItem(KEYS.USER);
         },
 
-        /**
-         * Check if the user is currently authenticated.
-         */
         isAuthenticated() {
             return !!localStorage.getItem(KEYS.ACCESS_TOKEN);
         },

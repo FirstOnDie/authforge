@@ -1,8 +1,3 @@
-/* ══════════════════════════════════════════════════════
-   AuthForge — Frontend Styles
-   Modern dark theme with glassmorphism and purple accents
-   ══════════════════════════════════════════════════════ */
-
 :root {
     --bg-main: #0a0a1a;
     --bg-card: rgba(20, 20, 40, 0.8);
@@ -43,7 +38,6 @@ body {
         radial-gradient(ellipse 60% 40% at 80% 100%, rgba(59, 130, 246, 0.08), transparent);
 }
 
-/* ════ Loading Screen ════ */
 .loading-screen {
     position: fixed;
     inset: 0;
@@ -100,7 +94,6 @@ body {
     }
 }
 
-/* ════ Views ════ */
 .view {
     min-height: 100vh;
 }
@@ -109,7 +102,6 @@ body {
     display: none !important;
 }
 
-/* ════ Auth Container ════ */
 .auth-container {
     display: flex;
     flex-direction: column;
@@ -146,7 +138,6 @@ body {
     margin-top: 8px;
 }
 
-/* ════ Auth Forms ════ */
 .auth-form {
     width: 100%;
     max-width: 420px;
@@ -209,7 +200,6 @@ body {
     color: var(--text-dim);
 }
 
-/* ════ Buttons ════ */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -267,7 +257,6 @@ body {
     color: var(--accent);
 }
 
-/* ════ Auth Links & Errors ════ */
 .auth-links {
     display: flex;
     flex-direction: column;
@@ -315,7 +304,6 @@ body {
     font-weight: 600;
 }
 
-/* ════ Dashboard ════ */
 .dashboard-header {
     display: flex;
     align-items: center;
@@ -400,7 +388,6 @@ body {
     margin: 0 auto;
 }
 
-/* ════ Welcome Card ════ */
 .welcome-card {
     text-align: center;
     padding: 50px;
@@ -427,7 +414,6 @@ body {
     color: var(--text-muted);
 }
 
-/* ════ Info Grid ════ */
 .info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -480,7 +466,6 @@ body {
     line-height: 1.5;
 }
 
-/* ════ Admin Table ════ */
 .section-title {
     font-size: 1.5rem;
     font-weight: 800;
@@ -566,7 +551,6 @@ body {
     color: var(--accent);
 }
 
-/* ════ Toast Notifications ════ */
 .toast-container {
     position: fixed;
     bottom: 24px;
@@ -636,7 +620,6 @@ body {
     }
 }
 
-/* ════ Responsive ════ */
 @media (max-width: 768px) {
     .dashboard-header {
         flex-direction: column;

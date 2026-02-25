@@ -1,16 +1,5 @@
-# ══════════════════════════════════════════════
-#  AuthForge — Docker Compose
-# ══════════════════════════════════════════════
-#
-#  Quick Start:
-#    docker-compose up --build
-#    Open http://localhost:3000
-#
-# ══════════════════════════════════════════════
-
 services:
 
-  # ── PostgreSQL Database ──
   postgres:
     image: postgres:16-alpine
     container_name: authforge-db
@@ -23,12 +12,11 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U authforge"]
+      test: [ "CMD-SHELL", "pg_isready -U authforge" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ── Spring Boot Backend ──
   backend:
     build: ./backend
     container_name: authforge-api
@@ -45,7 +33,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # ── Frontend (Nginx) ──
   frontend:
     build: ./frontend
     container_name: authforge-ui

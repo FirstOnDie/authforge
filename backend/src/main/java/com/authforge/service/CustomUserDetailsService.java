@@ -10,12 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-/**
- * Custom UserDetailsService implementation.
- *
- * Loads user data from our database and converts it into
- * Spring Security's UserDetails format.
- */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 

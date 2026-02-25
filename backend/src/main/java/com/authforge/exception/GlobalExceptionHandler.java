@@ -14,20 +14,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Global Exception Handler.
- *
- * Catches exceptions thrown by controllers and returns
- * clean, consistent JSON error responses.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    /**
-     * Handle validation errors (e.g., @Valid failures).
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -42,9 +33,6 @@ public class GlobalExceptionHandler {
                 "details", errors));
     }
 
-    /**
-     * Handle bad credentials (wrong email/password).
-     */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
@@ -53,9 +41,6 @@ public class GlobalExceptionHandler {
                 "error", "Invalid email or password"));
     }
 
-    /**
-     * Handle all other runtime exceptions.
-     */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntime(RuntimeException ex) {
         log.error("Runtime exception: {}", ex.getMessage());
