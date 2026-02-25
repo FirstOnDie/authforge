@@ -1,0 +1,59 @@
+# ══════════════════════════════════════════════
+#  AuthForge — Docker Compose
+# ══════════════════════════════════════════════
+#
+#  Quick Start:
+#    docker-compose up --build
+#    Open http://localhost:3000
+#
+# ══════════════════════════════════════════════
+
+services:
+
+  # ── PostgreSQL Database ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: authforge-db
+    environment:
+      POSTGRES_DB: authforge
+      POSTGRES_USER: authforge
+      POSTGRES_PASSWORD: authforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authforge"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Spring Boot Backend ──
+  backend:
+    build: ./backend
+    container_name: authforge-api
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/authforge
+      DB_USERNAME: authforge
+      DB_PASSWORD: authforge
+      JWT_SECRET: authforge-super-secret-key-change-me-in-production-256-bits
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Frontend (Nginx) ──
+  frontend:
+    build: ./frontend
+    container_name: authforge-ui
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
