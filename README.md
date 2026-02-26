@@ -1,8 +1,5 @@
 # 🔐 AuthForge
 
-[English](#english) | [Español](#español)
-
-<a id="english"></a>
 > Production-ready authentication starter kit for Spring Boot
 
 ![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
@@ -118,28 +115,146 @@ Default credentials: `admin` / `admin` (change on first login).
 
 ---
 
-## 📡 API Endpoints
+## 📖 API Endpoint Guide
 
-### Authentication (Public)
-```text
-POST /api/auth/register        → Register a new user
-POST /api/auth/login           → Login → JWT tokens
-POST /api/auth/refresh         → Refresh access token
-POST /api/auth/logout          → Invalidate refresh token
-POST /api/auth/forgot-password → Generate reset token
-POST /api/auth/reset-password  → Reset with token
-```
+Below is a detailed guide on the available endpoints and their expected payloads.
 
-### User (Authenticated)
-```text
-GET  /api/users/me             → Current user profile
-```
+### 1. Authentication
+Endpoints for login, registration, and managing access tokens.
 
-### Admin (ADMIN role)
-```text
-GET  /api/admin/users          → List all users
-PUT  /api/admin/users/{id}/role → Change user role
-```
+#### `POST /api/auth/register`
+Creates a new account.
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "SecurePassword123"
+  }
+  ```
+
+#### `POST /api/auth/login`
+Authenticates a user and issues JWT tokens.
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "email": "john@example.com",
+    "password": "SecurePassword123"
+  }
+  ```
+- **Response**: Returns an `accessToken` and a `refreshToken`. If 2FA is enabled, it returns `requiresTwoFactor: true` and no tokens.
+
+#### `POST /api/auth/refresh`
+Exchanges a valid Refresh Token for a new Access Token.
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "refreshToken": "your-refresh-token-here"
+  }
+  ```
+
+#### `POST /api/auth/logout`
+Invalidates the current Refresh Token.
+- **Access**: Authenticated (Requires Bearer Token)
+- **Request Body**:
+  ```json
+  {
+    "refreshToken": "your-refresh-token-here"
+  }
+  ```
+
+#### `POST /api/auth/forgot-password`
+Initates the password reset flow by email.
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "email": "john@example.com"
+  }
+  ```
+
+#### `POST /api/auth/reset-password`
+Resets the password using the token sent to the email.
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "token": "reset-token-received-via-email",
+    "newPassword": "NewSecurePassword123"
+  }
+  ```
+
+### 2. Two-Factor Authentication (TOTP)
+Endpoints for setting up and verifying TOTP codes.
+
+#### `POST /api/2fa/setup`
+Generates a TOTP secret and QR code URI for Authenticator apps.
+- **Access**: Authenticated (Requires Bearer Token)
+- **Response**: Returns `secretKey` and `qrCodeUrl`.
+
+#### `POST /api/2fa/enable`
+Verifies a TOTP code and activates 2FA on the account.
+- **Access**: Authenticated (Requires Bearer Token)
+- **Request Body**:
+  ```json
+  {
+    "code": "123456"
+  }
+  ```
+
+#### `POST /api/2fa/disable`
+Disables Two-Factor Authentication.
+- **Access**: Authenticated (Requires Bearer Token)
+
+#### `POST /api/auth/2fa/verify`
+Step 2 of login when 2FA is enabled. Validates code and issues JWT tokens.
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "email": "john@example.com",
+    "code": "123456"
+  }
+  ```
+
+### 3. User Profile
+Endpoints related to the logged-in user.
+
+#### `GET /api/users/me`
+Fetches the current user's profile information.
+- **Access**: Authenticated (Requires Bearer Token)
+- **Response Example**:
+  ```json
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "USER",
+    "emailVerified": true,
+    "twoFactorEnabled": false,
+    "oauth2Provider": "local"
+  }
+  ```
+
+### 4. Admin Management
+Administrative actions, available only to accounts with the `ADMIN` role.
+
+#### `GET /api/admin/users`
+Fetches a list of all registered users.
+- **Access**: `ADMIN` Only
+
+#### `PUT /api/admin/users/{id}/role`
+Changes the role of a user.
+- **Access**: `ADMIN` Only
+- **Path Parameter**: `id` - The numeric ID of the user.
+- **Request Example**: `?role=ADMIN` (as Request Parameter)
+
+#### `GET /api/admin/features`
+Fetches the active states of system feature flags.
+- **Access**: `ADMIN` Only
 
 ---
 
@@ -159,36 +274,6 @@ PUT  /api/admin/users/{id}/role → Change user role
 │  /api/* ──►  JWT Filter │                   │
 │          │  BCrypt      │                   │
 └──────────┴──────────────┴───────────────────┘
-```
-
----
-
-## 📁 Project Structure
-
-```text
-authforge/
-├── backend/
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/main/java/com/authforge/
-│       ├── config/
-│       ├── controller/
-│       ├── dto/
-│       ├── exception/
-│       ├── model/
-│       ├── repository/
-│       ├── security/
-│       └── service/
-├── frontend/
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── index.html
-│   ├── css/
-│   └── js/
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-└── README.md
 ```
 
 ---
@@ -227,24 +312,6 @@ All configuration is done via environment variables (see `.env.example`):
 
 ---
 
-## 🛡️ Two-Factor Authentication (TOTP)
-
-AuthForge supports TOTP-based 2FA compatible with Google Authenticator, Authy, and similar apps.
-
-**Flow:**
-1. User enables 2FA from the dashboard → scans QR code with authenticator app
-2. Confirms with a 6-digit code → 2FA is activated
-3. On next login, after entering email/password, a TOTP code is required
-4. User can disable 2FA from the dashboard at any time
-
-**API Endpoints:**
-- `POST /api/2fa/setup` — Generate TOTP secret + QR URI (authenticated)
-- `POST /api/2fa/enable` — Verify code and enable 2FA (authenticated)
-- `POST /api/2fa/disable` — Disable 2FA (authenticated)
-- `POST /api/auth/2fa/verify` — Verify TOTP code during login (public)
-
----
-
 ## ⏱️ Rate Limiting
 
 Auth endpoints (`/api/auth/**`) are rate-limited to prevent brute-force attacks.
@@ -254,26 +321,6 @@ Auth endpoints (`/api/auth/**`) are rate-limited to prevent brute-force attacks.
 | Requests per minute (per IP) | 30 | `RATE_LIMIT_RPM` |
 
 When the limit is exceeded, the API returns HTTP `429 Too Many Requests`.
-
----
-
-## 🧪 Testing the API
-
-```bash
-# Register
-curl -X POST http://localhost:8090/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"John","email":"john@test.com","password":"password123"}'
-
-# Login
-curl -X POST http://localhost:8090/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"john@test.com","password":"password123"}'
-
-# Get profile (replace TOKEN)
-curl -X GET http://localhost:8090/api/users/me \
-  -H "Authorization: Bearer TOKEN"
-```
 
 ---
 
@@ -296,306 +343,4 @@ curl -X GET http://localhost:8090/api/users/me \
   Built with ☕ Java 21 + 🍃 Spring Boot 3 + 🛡️ Spring Security 6
   <br>
   <strong>by <a href="https://github.com/FirstOnDie">Carlos Expósito</a></strong>
-</p>
-
-<br>
-<hr>
-<br>
-
-<a id="español"></a>
-# 🔐 AuthForge (Español)
-
-> Kit de inicio de autenticación listo para producción para Spring Boot
-
-![Java 21](https://img.shields.io/badge/Java-21-orange?logo=openjdk)
-![Spring Boot 3.2](https://img.shields.io/badge/Spring%20Boot-3.2-green?logo=spring)
-![Spring Security 6](https://img.shields.io/badge/Spring%20Security-6-green?logo=springsecurity)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)
-![Docker](https://img.shields.io/badge/Docker-Ready-blue?logo=docker)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
-![Coverage](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)
-
----
-
-## ✨ Características
-
-| Característica | Estado |
-|---------|--------|
-| Autenticación JWT (Tokens de Acceso + Refresco) | ✅ |
-| Hashing de Contraseñas con BCrypt | ✅ |
-| Control de Acceso Basado en Roles (USER, ADMIN) | ✅ |
-| Refresco de Tokens con Rotación | ✅ |
-| Recuperación de Contraseña (token de reseteo) | ✅ |
-| Configuración de CORS | ✅ |
-| Manejo Global de Excepciones | ✅ |
-| Demostración Frontend (Login, Registro, Panel, Admin) | ✅ |
-| Docker Compose (PostgreSQL + Backend + Frontend) | ✅ |
-| OAuth2 (Google, GitHub) | ✅ |
-| Autenticación de Dos Factores (TOTP) | ✅ |
-| Límite de Peticiones - Rate Limiting (Bucket4j) | ✅ |
-| Feature Flags (Activar características mediante variables de entorno) | ✅ |
-| Servicio de Email (Verificación + Reseteo de contraseña) | ✅ |
-| Pruebas Unitarias + Cobertura JaCoCo (100%) | ✅ |
-| Calidad de Código SonarQube (0 Bugs/Smells) | ✅ |
-
----
-
-## 🚀 Inicio Rápido
-
-### Requisitos Previos
-
-- [Docker](https://docs.docker.com/get-docker/) y [Docker Compose](https://docs.docker.com/compose/install/)
-
-### Ejecutar con Docker (recomendado)
-
-```bash
-git clone https://github.com/FirstOnDie/authforge.git
-cd authforge
-docker-compose up --build
-```
-
-Abre **http://localhost:4000** → ¡Listo! 🎉
-
-### Puertos por defecto
-
-| Servicio | Puerto | URL |
-|---------|------|-----|
-| Frontend (Nginx) | 4000 | http://localhost:4000 |
-| Backend (Spring Boot) | 8090 | http://localhost:8090 |
-| PostgreSQL | 5433 | — |
-| MailHog (Interfaz de Email) | 8025 | http://localhost:8025 |
-| SonarQube (separado) | 9000 | http://localhost:9000 |
-
----
-
-## 🎛️ Feature Flags (Banderas de Características)
-
-Activa o desactiva funcionalidades a través de variables de entorno — sin necesidad de cambiar el código.
-
-| Bandera | Variable de Entorno | Por Defecto |
-|------|-------------|---------|
-| Login con OAuth2 | `FEATURE_OAUTH2` | `true` |
-| Autenticación 2FA | `FEATURE_2FA` | `true` |
-| Límite de Peticiones | `FEATURE_RATE_LIMIT` | `true` |
-| Verificación de Email | `FEATURE_EMAIL` | `true` |
-
-Las banderas activas están expuestas en `GET /api/admin/features` (solo para el rol admin).
-
----
-
-## 📧 Servicio de Email
-
-Utiliza **MailHog** en Docker para pruebas de correo locales (no se envían correos reales).
-
-- **Correos de verificación**: se envían al registrarse cuando `FEATURE_EMAIL=true`
-- **Correos de recuperación de contraseña**: Correos en HTML con enlaces de reseteo
-- **Interfaz MailHog**: http://localhost:8025 para ver todos los correos capturados
-
----
-
-## 🧪 Pruebas, Cobertura y SonarQube
-
-AuthForge asegura una alta calidad de código y fiabilidad.
-
-### Ejecutar pruebas localmente
-```bash
-cd backend
-mvn clean test
-```
-Reporte de cobertura de JaCoCo: `backend/target/site/jacoco/index.html`
-
-### Análisis con SonarQube
-Se ejecuta en un archivo **Docker Compose independiente** para mantener el stack principal ligero. Aplica una estricta Quality Gate (0 Bugs, 0 Vulnerabilidades, 0 Code Smells, 100% de Cobertura).
-
-```bash
-# Iniciar SonarQube
-docker-compose -f docker-compose.sonar.yml up -d
-
-# Esperar ~1 minuto para que inicie, luego ejecutar análisis
-cd backend
-mvn clean verify sonar:sonar -Dsonar.host.url=http://localhost:9000 -Dsonar.login=admin -Dsonar.password=admin
-```
-
-Credenciales por defecto: `admin` / `admin` (cámbialas en el primer inicio de sesión).
-
----
-
-## 📡 Endpoints de la API
-
-### Autenticación (Público)
-```text
-POST /api/auth/register        → Registrar un nuevo usuario
-POST /api/auth/login           → Iniciar sesión → tokens JWT
-POST /api/auth/refresh         → Refrescar token de acceso
-POST /api/auth/logout          → Invalidar token de refresco
-POST /api/auth/forgot-password → Generar token de reseteo de contraseña
-POST /api/auth/reset-password  → Resetear contraseña con el token
-```
-
-### Usuario (Autenticado)
-```text
-GET  /api/users/me             → Perfil del usuario actual
-```
-
-### Admin (Rol ADMIN)
-```text
-GET  /api/admin/users          → Listar todos los usuarios
-PUT  /api/admin/users/{id}/role → Cambiar el rol de un usuario
-```
-
----
-
-## 🏗️ Arquitectura
-
-```text
-┌─────────────────────────────────────────────┐
-│                Docker Compose               │
-├──────────┬──────────────┬───────────────────┤
-│ Frontend │   Backend    │    PostgreSQL     │
-│ Nginx    │ Spring Boot  │                   │
-│ :4000    │ :8090        │    :5433          │
-│          │              │                   │
-│ HTML/CSS │ Controladores│  tabla users      │
-│ JS       │ Servicios    │  refresh_tokens   │
-│          │ Seguridad    │                   │
-│  /api/* ──► Filtro JWT  │                   │
-│          │  BCrypt      │                   │
-└──────────┴──────────────┴───────────────────┘
-```
-
----
-
-## 📁 Estructura del Proyecto
-
-```text
-authforge/
-├── backend/
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/main/java/com/authforge/
-│       ├── config/
-│       ├── controller/
-│       ├── dto/
-│       ├── exception/
-│       ├── model/
-│       ├── repository/
-│       ├── security/
-│       └── service/
-├── frontend/
-│   ├── Dockerfile
-│   ├── nginx.conf
-│   ├── index.html
-│   ├── css/
-│   └── js/
-├── docker-compose.yml
-├── .env.example
-├── .gitignore
-└── README.md
-```
-
----
-
-## ⚙️ Configuración
-
-Toda la configuración se realiza a través de variables de entorno (ver `.env.example`):
-
-| Variable | Por Defecto | Descripción |
-|----------|---------|-------------|
-| `DB_URL` | `jdbc:postgresql://postgres:5432/authforge` | URL de la base de datos |
-| `DB_USERNAME` | `authforge` | Usuario de la base de datos |
-| `DB_PASSWORD` | `authforge` | Contraseña de la base de datos |
-| `JWT_SECRET` | (¡cámbiame!) | Clave de firma HMAC-SHA256 |
-| `CORS_ORIGINS` | `http://localhost:4000` | Orígenes CORS permitidos |
-| `GOOGLE_CLIENT_ID` | — | Client ID de Google OAuth2 |
-| `GOOGLE_CLIENT_SECRET` | — | Client Secret de Google OAuth2 |
-| `GITHUB_CLIENT_ID` | — | Client ID de GitHub OAuth2 |
-| `GITHUB_CLIENT_SECRET` | — | Client Secret de GitHub OAuth2 |
-| `OAUTH2_REDIRECT_URI` | `http://localhost:4000` | URL de redirección al Frontend tras OAuth2 |
-
----
-
-## 🔑 Configuración de OAuth2 (Google y GitHub)
-
-### Google
-1. Ve a [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials
-2. Crea un **OAuth 2.0 Client ID** (Aplicación Web)
-3. Configura la URI de redirección autorizada: `http://localhost:8090/login/oauth2/code/google`
-4. Copia el Client ID y el Client Secret en tu archivo `.env`
-
-### GitHub
-1. Ve a [GitHub Settings](https://github.com/settings/developers) → OAuth Apps → New OAuth App
-2. Configura la URL de Autorización (callback): `http://localhost:8090/login/oauth2/code/github`
-3. Copia el Client ID y el Client Secret en tu archivo `.env`
-
----
-
-## 🛡️ Autenticación de Dos Factores (TOTP)
-
-AuthForge soporta 2FA basado en TOTP, compatible con Google Authenticator, Authy, y aplicaciones similares.
-
-**Flujo:**
-1. El usuario habilita el 2FA desde el panel de control → escanea el código QR con la app autenticadora
-2. Confirma con un código de 6 dígitos → 2FA es activado
-3. En el siguiente inicio de sesión, tras introducir email/contraseña, se requiere un código TOTP
-4. El usuario puede deshabilitar el 2FA desde el panel en cualquier momento
-
-**Endpoints de la API:**
-- `POST /api/2fa/setup` — Generar secreto TOTP + URI del QR (autenticado)
-- `POST /api/2fa/enable` — Verificar código y habilitar 2FA (autenticado)
-- `POST /api/2fa/disable` — Deshabilitar 2FA (autenticado)
-- `POST /api/auth/2fa/verify` — Verificar código TOTP durante el login (público)
-
----
-
-## ⏱️ Límite de Peticiones (Rate Limiting)
-
-Los endpoints de autenticación (`/api/auth/**`) tienen un límite de peticiones para prevenir ataques de fuerza bruta.
-
-| Configuración | Por Defecto | Variable de Entorno |
-|---------|---------|-------------|
-| Peticiones por minuto (por IP) | 30 | `RATE_LIMIT_RPM` |
-
-Cuando se supera el límite, la API retorna un error HTTP `429 Too Many Requests`.
-
----
-
-## 🧪 Probando la API
-
-```bash
-# Registrar
-curl -X POST http://localhost:8090/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"name":"John","email":"john@test.com","password":"password123"}'
-
-# Iniciar Sesión
-curl -X POST http://localhost:8090/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"john@test.com","password":"password123"}'
-
-# Obtener perfil (reemplaza TOKEN)
-curl -X GET http://localhost:8090/api/users/me \
-  -H "Authorization: Bearer TOKEN"
-```
-
----
-
-## 📋 Hoja de Ruta (Roadmap)
-
-- [x] **v1.0** — Autenticación JWT, Roles, Recuperación de Contraseña, Docker
-- [x] **v1.1** — OAuth2 (Google, GitHub)
-- [x] **v1.2** — 2FA (TOTP), Rate Limiting
-- [x] **v2.0** — Servicio de Email, Verificación de Cuentas, Feature Flags, 100% Cobertura, Calidad en SonarQube
-
----
-
-## 📜 Licencia
-
-[MIT](LICENSE) — Usa este kit de inicio libremente en tus proyectos.
-
----
-
-<p align="center">
-  Construido con ☕ Java 21 + 🍃 Spring Boot 3 + 🛡️ Spring Security 6
-  <br>
-  <strong>por <a href="https://github.com/FirstOnDie">Carlos Expósito</a></strong>
 </p>
