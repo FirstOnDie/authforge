@@ -51,6 +51,15 @@ docker-compose up --build
 
 Open **http://localhost:4000** → Ready! 🎉
 
+### Updating containers (after code changes)
+
+If you modify the source code, you can apply the changes by rebuilding the containers:
+
+```bash
+docker-compose down
+docker-compose up --build -d
+```
+
 ### Default ports
 
 | Service | Port | URL |
