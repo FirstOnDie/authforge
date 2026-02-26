@@ -117,7 +117,14 @@ Default credentials: `admin` / `admin` (change on first login).
 
 ## 📖 API Endpoint Guide
 
-Below is a detailed guide on the available endpoints and their expected payloads.
+AuthForge uses **Swagger UI (OpenAPI 3)** for interactive API documentation.
+Once the application is running, you can explore and test all endpoints directly from your browser:
+
+👉 **[http://localhost:8090/swagger-ui.html](http://localhost:8090/swagger-ui.html)**
+
+*(To use protected endpoints in Swagger, click the **Authorize** button and input your `Bearer <accessToken>`)*
+
+Below is a brief summary of the available endpoints.
 
 ### 1. Authentication
 Endpoints for login, registration, and managing access tokens.

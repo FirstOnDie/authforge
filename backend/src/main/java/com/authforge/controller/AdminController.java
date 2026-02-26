@@ -10,9 +10,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api/admin")
+@Tag(name = "Admin Management", description = "Endpoints for administrative actions (requires ADMIN role)")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminController {
 
     private final UserService userService;
@@ -23,6 +29,9 @@ public class AdminController {
         this.featureFlags = featureFlags;
     }
 
+    @Operation(summary = "Get all users", description = "Returns a list of all registered users.")
+    @ApiResponse(responseCode = "200", description = "List of users returned successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied (requires ADMIN role)")
     @GetMapping("/users")
     public ResponseEntity<List<AuthResponse.UserDto>> getAllUsers() {
         List<AuthResponse.UserDto> users = userService.getAllUsers().stream()
@@ -37,6 +46,10 @@ public class AdminController {
         return ResponseEntity.ok(users);
     }
 
+    @Operation(summary = "Change user role", description = "Updates the role (USER/ADMIN) of a specific user.")
+    @ApiResponse(responseCode = "200", description = "User role updated successfully")
+    @ApiResponse(responseCode = "403", description = "Access denied")
+    @ApiResponse(responseCode = "404", description = "User not found")
     @PutMapping("/users/{id}/role")
     public ResponseEntity<AuthResponse.UserDto> changeUserRole(
             @PathVariable Long id,
@@ -54,6 +67,8 @@ public class AdminController {
         return ResponseEntity.ok(dto);
     }
 
+    @Operation(summary = "Get feature flags", description = "Returns the current state of system feature flags.")
+    @ApiResponse(responseCode = "200", description = "Feature flags returned successfully")
     @GetMapping("/features")
     public ResponseEntity<Map<String, Boolean>> getFeatures() {
         Map<String, Boolean> features = new LinkedHashMap<>();
